@@ -1,0 +1,47 @@
+tic
+train = readmatrix('C:\Users\User\OneDrive\Desktop\archive\mnist_train.csv');
+test = readmatrix('C:\Users\User\OneDrive\Desktop\archive\mnist_test.csv');
+
+hiddenNodesRange = 10:5:200;
+XTrain = zscore(train(:,2:end));
+XTest = zscore(test(:,2:end));
+
+YTrain = train(:,1) + 1;
+YTest = test(:,1) + 1;
+
+YTrainOHE = dummyvar(YTrain);
+YTestOHE = dummyvar(YTest);
+
+XTrainSize = size(XTrain);
+inputSize = XTrainSize(2);
+
+MSEValues = zeros(size(hiddenNodesRange));
+
+for j = 1:length(hiddenNodesRange)
+    hiddenSize = hiddenNodesRange(j);
+    inputWeights = normrnd(0, 1, [inputSize, hiddenSize]);
+    bias = normrnd(0, 1, [hiddenSize, 1]);
+    hiddenNodes = @(X) tanh(X * inputWeights + bias');
+    outputWeights = pinv(hiddenNodes(XTrain)) * YTrainOHE;
+    predict = @(X) hiddenNodes(X) * outputWeights;
+    YHat = predict(XTest);
+
+    MSE = 0;
+    total = size(XTest, 1);
+
+    for i = 1:total
+        [~, predicted] = max(YHat(i, :));
+        [~, actual] = max(YTestOHE(i, :));
+        MSE = MSE + sum((predicted - actual).^2);
+    end
+
+    MSEValues(j) = MSE / total;
+    disp(['MSE for ', num2str(hiddenSize), ' hidden nodes: ', num2str(MSEValues(j))]);
+end
+
+plot(hiddenNodesRange, MSEValues, 'bo-');
+xlabel('Number of Hidden Nodes');
+ylabel('Mean Squared Error');
+title('MSE against Hidden Nodes');
+grid on;
+toc

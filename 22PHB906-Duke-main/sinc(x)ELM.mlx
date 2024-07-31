@@ -1,0 +1,42 @@
+tic
+hiddenNodesRange = 10:5:200;
+NTrain = 500;
+NTest = 100;
+
+XTrain = linspace(-pi, pi, NTrain)';
+XTest = linspace(-pi, pi, NTest)';
+
+sinc = @(x) sin(x*pi)./(x*pi);
+
+YTrain = sinc(XTrain);
+YTest = sinc(XTest);
+
+XTrain = zscore(XTrain);
+XTest = zscore(XTest);
+
+relu = @(x) max(x, 0);
+
+inputSize = 1;
+lambda = 0.01;
+MSE = zeros(size(hiddenNodesRange));
+
+for i = 1:length(hiddenNodesRange)
+    hiddenSize = hiddenNodesRange(i);
+    inputWeights = normrnd(0, 1, [inputSize, hiddenSize]);
+    bias = normrnd(0, 1, [hiddenSize, 1]);
+    hiddenNodes = @(X) relu(X * inputWeights + bias');
+    HTrain = hiddenNodes(XTrain);
+    outputWeights = (HTrain' * HTrain + lambda * eye(hiddenSize)) \ (HTrain' * YTrain);
+    HTest = hiddenNodes(XTest);
+    YHat = HTest * outputWeights;
+
+    MSE(i) = mean((YTest - YHat).^2);
+    disp(['Hidden Nodes: ', num2str(hiddenSize), ', MSE: ', num2str(MSE(i))]);
+end
+
+plot(hiddenNodesRange, MSE, 'x-');
+xlabel('Number of Hidden Nodes');
+ylabel('Mean Squared Error');
+title('MSE against Number of Hidden Nodes');
+grid on;
+toc

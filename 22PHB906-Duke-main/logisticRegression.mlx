@@ -1,0 +1,92 @@
+load('mnist.mat')
+
+class1 = 4;
+class2 = 7;
+class1Indices = find(YTrain == class1);
+class2Indices = find(YTrain == class2);
+trainImage1 = XTrain(:,:,1,class1Indices(1));
+trainImage2 = XTrain(:,:,1,class2Indices(1));
+
+colormap gray
+subplot(1, 2, 1)
+imagesc(trainImage1)
+title(['Class ', num2str(class1)])
+subplot(1, 2, 2)
+imagesc(trainImage2)
+title(['Class ', num2str(class2)])
+
+trainImage = reshape(XTrain, 60000, 784);
+trainImageSet = trainImage(1:10000, :);
+YTrainSet = (YTrain(1:10000) == class1);
+
+testImage = reshape(XTest, 10000, 784);
+YTestSet = (YTest == class1);
+
+W = trainImageSet \ YTrainSet;
+w0 = 0;
+z = trainImageSet * W + w0;
+YHat = 1 ./ (1 + exp(-z));
+
+L = -[YTrainSet .* log(YHat) + (1 - YTrainSet) .* log(1 - YHat)];
+loss = mean(L);
+disp(['Cross-entropy loss: ', num2str(loss)])
+
+delta = 0.01;
+
+dL_dW = (1 / size(trainImageSet, 1)) * trainImageSet' * (YHat - YTrainSet);
+dL_dw0 = (1 / size(trainImageSet, 1)) * sum(YHat - YTrainSet);
+W = W - delta * dL_dW;
+w0 = w0 - delta * dL_dw0;
+z = trainImageSet * W + w0;
+YHat = 1 ./ (1 + exp(-z));
+
+L = -[YTrainSet .* log(YHat) + (1 - YTrainSet) .* log(1 - YHat)];
+loss = mean(L);
+disp(['Cross-entropy loss: ', num2str(loss)])
+
+
+load('mnist.mat')
+
+class1 = 4;
+class2 = 7;
+class1Indices = find(YTrain == class1);
+class2Indices = find(YTrain == class2);
+trainImage1 = XTrain(:,:,1,class1Indices(1));
+trainImage2 = XTrain(:,:,1,class2Indices(1));
+
+colormap gray
+subplot(1, 2, 1)
+imagesc(trainImage1)
+title(['Class ', num2str(class1)])
+subplot(1, 2, 2)
+imagesc(trainImage2)
+title(['Class ', num2str(class2)])
+
+trainImage = reshape(XTrain, 60000, 784);
+trainImageSet = trainImage(1:10000, :);
+YTrainSet = (YTrain(1:10000) == class1);
+
+testImage = reshape(XTest, 10000, 784);
+YTestSet = (YTest == class1);
+
+W = trainImageSet \ YTrainSet;
+w0 = 0;
+z = trainImageSet * W + w0;
+YHat = 1 ./ (1 + exp(-z));
+
+L = -[YTrainSet .* log(YHat) + (1 - YTrainSet) .* log(1 - YHat)];
+loss = mean(L);
+disp(['Cross-entropy loss: ', num2str(loss)])
+
+delta = 0.01;
+
+dL_dW = (1 / size(trainImageSet, 1)) * trainImageSet' * (YHat - YTrainSet);
+dL_dw0 = (1 / size(trainImageSet, 1)) * sum(YHat - YTrainSet);
+W = W - delta * dL_dW;
+w0 = w0 - delta * dL_dw0;
+z = trainImageSet * W + w0;
+YHat = 1 ./ (1 + exp(-z));
+
+L = -[YTrainSet .* log(YHat) + (1 - YTrainSet) .* log(1 - YHat)];
+loss = mean(L);
+disp(['Cross-entropy loss: ', num2str(loss)])

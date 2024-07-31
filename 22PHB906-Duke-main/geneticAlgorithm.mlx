@@ -1,0 +1,93 @@
+tic
+populationSize = 10;
+maxGenerations = 10;
+mutationRate = 0.1;
+N = 100;
+k = 50;
+
+population = randi([0, 1], populationSize, N);
+bestFitnessValues = zeros(1, maxGenerations);
+
+for generation = 1:maxGenerations
+    fitness = evaluateFitness(population, k);
+    selectedIndices = selection(fitness);
+    offspring = crossover(population(selectedIndices, :));
+    mutatedOffspring = mutation(offspring, mutationRate);
+    newPopulation = [population; mutatedOffspring];
+    [~, sortedIndices] = sort(fitness, 'descend');
+    bestPopulation = population(sortedIndices(1:populationSize), :);
+    newPopulation(1:populationSize, :) = bestPopulation;
+    population = newPopulation;
+    
+    bestFitness = evaluateFitness(population, k);
+    bestFitnessValues(generation) = max(bestFitness);
+end
+
+bestPattern = population(find(bestFitness == max(bestFitness)), :);
+
+disp("Best Pattern:");
+disp(bestPattern);
+disp("Best Pattern's Fitness:");
+disp(max(bestFitness))
+
+generationNumbers = 1:maxGenerations;
+plot(generationNumbers, bestFitnessValues);
+xlabel('Generation');
+ylabel('Best Fitness');
+grid on
+title('Best Fitness against Generation');
+
+figure;
+imagesc(bestPattern);
+colormap([0 0 0; 1 1 1]);
+colorbar;
+axis square;
+title('Best Pattern');
+toc
+
+function fitness = evaluateFitness(population, k)
+    [~, N] = size(population);
+    fitness = zeros(size(population, 1), 1);
+    
+    for i = 1:size(population, 1)
+        P = population(i, :);
+        E_m = exp(2 * pi * 1i * P);
+        T = transmissionMatrix(N);
+        A_m = T * E_m';
+        I = abs(A_m).^2;
+        fitness(i) = I(k);
+    end
+end
+
+function T = transmissionMatrix(N)
+    T = (normrnd(0, 1, N) + 1i * normrnd(0, 1, N)) / sqrt(N);
+end
+
+function selectedIndices = selection(fitness)
+    numIndividuals = numel(fitness);
+    selectedIndices = randsample(numIndividuals, numIndividuals, true, fitness);
+end
+
+function offspring = crossover(parents)
+    [numParents, N] = size(parents);
+    offspring = zeros(size(parents));
+    
+    for i = 1:2:numParents-1
+        crossoverPoint = randi([1, N-1]);
+        offspring(i, :) = [parents(i, 1:crossoverPoint), parents(i+1, crossoverPoint+1:N)];
+        offspring(i+1, :) = [parents(i+1, 1:crossoverPoint), parents(i, crossoverPoint+1:N)];
+    end
+end
+
+function mutatedOffspring = mutation(offspring, mutationRate)
+    [numOffspring, N] = size(offspring);
+    mutatedOffspring = offspring;
+    
+    for i = 1:numOffspring
+        for j = 1:N
+            if rand <= mutationRate
+                mutatedOffspring(i, j) = 1 - offspring(i, j);
+            end
+        end
+    end
+end

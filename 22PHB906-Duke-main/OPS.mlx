@@ -1,0 +1,104 @@
+tic
+populationSize = 10;
+maxGenerations = 10;
+N = 100;
+k = 50;
+
+population = randi([0, 1], populationSize, N);
+bestFitnessValues = zeros(1, maxGenerations);
+
+for generation = 1:maxGenerations
+    fitness = evaluateFitness(population, k);
+    bestFitness = max(fitness);
+    bestIndex = find(fitness == bestFitness, 1);
+    bestPattern = population(bestIndex, :);
+    velocity = zeros(populationSize, N);
+    personalBest = population;
+    personalBestFitness = fitness;
+    groupBest = bestPattern;
+    groupBestFitness = bestFitness;
+    
+    for i = 1:populationSize
+        velocity(i, :) = randi([0, 1], 1, N);
+    end
+    
+    for iteration = 1:maxGenerations
+        for i = 1:populationSize
+            velocity(i, :) = velocity(i, :) + update(personalBest(i, :), groupBest, population(i, :));
+            population(i, :) = sigmoid(population(i, :) + velocity(i, :));
+        end
+        fitness = evaluateFitness(population, k);
+        
+        for i = 1:populationSize
+            if fitness(i) > personalBestFitness(i)
+                personalBest(i, :) = population(i, :);
+                personalBestFitness(i) = fitness(i);
+            end
+        end
+        [bestFitness, bestIndex] = max(personalBestFitness);
+        bestPattern = personalBest(bestIndex, :);
+    
+        if bestFitness > groupBestFitness
+            groupBest = bestPattern;
+            groupBestFitness = bestFitness;
+        end
+    end
+    population = repmat(groupBest, populationSize, 1);
+    bestFitnessValues(generation) = groupBestFitness;
+end
+
+disp("Best Pattern:");
+disp(groupBest);
+disp("Best Pattern's Fitness:");
+disp(groupBestFitness);
+
+generationNumbers = 1:maxGenerations;
+plot(generationNumbers, bestFitnessValues);
+xlabel('Generation');
+ylabel('Best Fitness');
+grid on
+title('Best Fitness against Generation');
+
+patternMatrix = reshape(groupBest, sqrt(N), sqrt(N));
+figure;
+heatmap(patternMatrix);
+xlabel('Column');
+ylabel('Row');
+title('Best Pattern');
+toc
+
+function fitness = evaluateFitness(population, k)
+    [~, N] = size(population);
+    fitness = zeros(size(population, 1), 1);
+    
+    for i = 1:size(population, 1)
+        P = population(i, :);
+        E_m = exp(2 * pi * 1i * P);
+        T = transmissionMatrix(N);
+        A_m = T * E_m';
+        I = abs(A_m).^2;
+        fitness(i) = I(k);
+    end
+end
+
+function T = transmissionMatrix(N)
+    T = (normrnd(0, 1, N) + 1i * normrnd(0, 1, N)) / sqrt(N);
+end
+
+function newVelocity = update(personalBest, groupBest, currentPattern)
+    c1 = 2;
+    c2 = 2;
+    inertiaWeight = 0.9;
+    velocity = zeros(1, numel(currentPattern));
+  
+    for i = 1:numel(currentPattern)
+        r1 = rand;
+        r2 = rand;
+        velocity(i) = inertiaWeight * currentPattern(i) + c1 * r1 * (personalBest(i) - currentPattern(i)) + c2 * r2 * (groupBest(i) - currentPattern(i));
+    end
+    newVelocity = velocity;
+end
+
+function sigmoidValue = sigmoid(x)
+    sigmoidValue = 1 ./ (1 + exp(-x));
+end

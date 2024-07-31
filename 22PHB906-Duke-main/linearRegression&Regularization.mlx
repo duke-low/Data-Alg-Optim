@@ -1,0 +1,48 @@
+load('mnist.mat')
+trainImage1 = XTrain(:,:,1,1);
+colormap gray
+imagesc(trainImage1)
+YTrain(1)
+
+trainImage = reshape(XTrain, 60000, 784);
+trainImageSet = trainImage(1:10000, :);
+YTrainSet = YTrain(1:10000);
+testImage = reshape(XTest, 10000, 784);
+
+x = trainImageSet \ YTrainSet;
+Y = testImage * x;
+mse = mean(abs(Y - YTrainSet))
+
+testOHE = bsxfun(@eq, YTest, 0:9)';
+trainOHE = bsxfun(@eq, YTrain, 0:9)';
+disp(testOHE(:,1:10));
+
+numComponents = 100;
+[coeff, score, ~, ~, explained] = pca(trainImageSet);
+trainImageSetReduced = score(:, 1:numComponents);
+L1Reduced = @(x) mean(abs(trainImageSetReduced * x - YTrainSet));
+L2Reduced = @(x) mean((trainImageSetReduced * x - YTrainSet).^2);
+xL1Reduced = fminsearch(L1Reduced, zeros(numComponents, 1));
+xL2Reduced = fminsearch(L2Reduced, zeros(numComponents, 1));
+
+lambda1 = 0;
+lambda2_values = [0.1, 0.2, 0.3];
+
+for lambda2 = lambda2_values
+    lossFunc = @(x) norm(trainImageSetReduced * x - YTrainSet, 2) + lambda1 * norm(x, 1) + lambda2 * norm(x, 2);
+    xOptimal = lsqnonneg(trainImageSetReduced, YTrainSet);
+    YPredicted = testImage * (coeff(:, 1:numComponents) * xOptimal);
+    mse = mean(abs(YPredicted - YTrainSet));
+    fprintf('Lambda2: %.2f, MSE: %.4f\n', lambda2, mse);
+end
+
+lambda2 = 0;
+lambda1_values = [0.1, 0.2, 0.3];
+
+for lambda1 = lambda1_values
+    lossFunc = @(x) norm(trainImageSetReduced * x - YTrainSet, 2) + lambda1 * norm(x, 1) + lambda2 * norm(x, 2);
+    xOptimal = lsqnonneg(trainImageSetReduced, YTrainSet);
+    YPredicted = testImage * (coeff(:, 1:numComponents) * xOptimal);
+    mse = mean(abs(YPredicted - YTrainSet));
+    fprintf('Lambda1: %.2f, MSE: %.4f\n', lambda1, mse);
+end
